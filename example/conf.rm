@@ -1,0 +1,23 @@
+#   <- Comment token, no multiline token, just use line by line commentary.
+//  <- Also a comment token
+;   <- also also
+
+VERBOSE=y
+EXIT_CODE=y
+
+build 
+{
+    compiler=g++
+    flags=-std=c++17 -Wall -Werror -Wextra -ggdb
+    src=src/*.cpp
+    include=src/include
+    target=progtest.exe
+}
+
+run
+{
+    interpreter=python
+    prescript=pretest.py
+    run=progtest.exe
+    postscript=testpost.py
+}
