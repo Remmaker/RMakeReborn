@@ -53,6 +53,32 @@ fn is_comment_line_or_empty(line: &str) -> bool {
     false
 }
 
+pub fn parse_value(conf: &Config, str: &str) -> Result<String, ConfigError> {
+    let mut ret: String = str.to_string();
+
+    if !ret.contains("${") {
+        return Ok(ret);
+    }
+
+    let mut tmp: String = ret.clone();
+
+    while let Some(target) = tmp.find("${") {
+        let start = target + 2;
+        if let Some(end) = tmp[start+2..].find("}") {
+            let current_var = tmp[start+2..end].to_string();
+            if conf.global.contains_key(&current_var) {
+                ret = ret.replace(&format!("${{{current_var}}}").to_string(), conf.global[&current_var].as_str());
+            }
+            tmp = ret[end..ret.len()].to_string();
+        } else {
+            return Err(ConfigError::InvalidSyntax { line: 0, message: "Missing '}' variadic syntax: (TODO)".into() })
+        }
+    }
+
+
+    Ok(ret)
+}
+
 pub fn parse(lines: Vec<&str>) -> Result<Config, ConfigError> {
     let mut config: Config = Config::default();
     
@@ -93,7 +119,8 @@ pub fn parse(lines: Vec<&str>) -> Result<Config, ConfigError> {
 
         if let Some((key, value)) = line.split_once("=") {
             if let Some(section) = &config.current_section {
-                config.section.entry(section.clone()).or_default().insert(key.to_string(), value.to_string());
+                let parsed_value = parse_value(&config, value)?;
+                config.section.entry(section.clone()).or_default().insert(key.to_string(), parsed_value);
                 continue;
             }
 

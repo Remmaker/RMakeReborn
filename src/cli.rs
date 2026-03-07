@@ -59,7 +59,12 @@ pub fn run() -> Result<(), ConfigError>{
     if verbose || show_exit {
         for elem in res {
             if verbose{
-                eprintln!("stdout: {}\nstderr: {}", elem.stdout, elem.stderr);
+                if !elem.stdout.is_empty() {
+                    eprintln!("stdout : {}", elem.stdout);
+                }
+                if !elem.stderr.is_empty() {
+                    eprintln!("stderr : {}", elem.stderr);
+                }
             }
             
             if show_exit {
