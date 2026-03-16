@@ -65,16 +65,30 @@ pub fn execute_build(conf: &BuildConfig) -> Result<Vec<CmdOutput>, ConfigError> 
     let is_cl = compiler.ends_with("cl") || compiler.ends_with("cl.exe");
 
     let output = std::process::Command::new(compiler)
-        .args(conf.flags.clone().get_or_insert_with(Vec::new).iter())
+        .args(conf.flags.clone().get_or_insert_with(Vec::new).iter()
+            .map(|s| if !is_cl {
+                if s.starts_with("--") {
+                    s.to_string()
+                } else {
+                    format!("-{}", s.trim_start_matches('-'))
+                }
+            } else { s.to_string() }))
+        
         .args(conf.include.clone().get_or_insert_with(Vec::new).iter()
             .map(|s| if !is_cl { format!("-I{s}") } else { format!("/I {s}")}))
+        
         .args(conf.src.iter())
+        
         .arg(if !is_cl { "-o" } else { "/o" }) 
+        
         .arg(conf.target.clone()) 
+        
         .args(conf.lpaths.clone().get_or_insert_with(Vec::new).iter()
             .map(|s| if !is_cl { format!("-L{s}") } else { format!("/L {s}") }))
+        
         .args(conf.lflags.clone().get_or_insert_with(Vec::new).iter() 
             .map(|s| if !is_cl { format!("-{s}") } else { s.to_string() }))
+    
         .output()
             .map_err(|_| ConfigError::CommandFailed { cmd: conf.compiler.clone(), message: "Unexpected".into() })?;
 
