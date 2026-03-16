@@ -87,7 +87,7 @@ pub fn execute_build(conf: &BuildConfig) -> Result<Vec<CmdOutput>, ConfigError> 
             .map(|s| if !is_cl { format!("-L{s}") } else { format!("/L {s}") }))
         
         .args(conf.lflags.clone().get_or_insert_with(Vec::new).iter() 
-            .map(|s| if !is_cl { format!("-{s}") } else { s.to_string() }))
+            .map(|s| if !is_cl { format!("-{}", s.trim_start_matches('-')) } else { s.to_string() }))
     
         .output()
             .map_err(|_| ConfigError::CommandFailed { cmd: conf.compiler.clone(), message: "Unexpected".into() })?;
