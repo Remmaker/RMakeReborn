@@ -24,10 +24,7 @@ build
 
 run
 {
-    interpreter=python
-    prescript=pretest.py
     run=progtest.exe
-    postscript=testpost.py
 }
 ```
 

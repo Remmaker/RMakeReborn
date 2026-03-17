@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use crate::config::*;
 
 #[derive(Default, Debug)]
@@ -64,8 +65,8 @@ pub fn execute_build(conf: &BuildConfig) -> Result<Vec<CmdOutput>, ConfigError> 
     let compiler = conf.compiler.clone();
     let is_cl = compiler.ends_with("cl") || compiler.ends_with("cl.exe");
 
-    let output = std::process::Command::new(compiler)
-        .args(conf.flags.clone().get_or_insert_with(Vec::new).iter()
+    let mut cmd = std::process::Command::new(compiler.clone());
+        cmd.args(conf.flags.clone().get_or_insert_with(Vec::new).iter()
             .map(|s| if !is_cl {
                 if s.starts_with("--") {
                     s.to_string()
@@ -87,10 +88,18 @@ pub fn execute_build(conf: &BuildConfig) -> Result<Vec<CmdOutput>, ConfigError> 
             .map(|s| if !is_cl { format!("-L{s}") } else { format!("/L {s}") }))
         
         .args(conf.lflags.clone().get_or_insert_with(Vec::new).iter() 
-            .map(|s| if !is_cl { format!("-{}", s.trim_start_matches('-')) } else { s.to_string() }))
+            .map(|s| if !is_cl { format!("-{}", s.trim_start_matches('-')) } else { s.to_string() }));
     
-        .output()
-            .map_err(|_| ConfigError::CommandFailed { cmd: conf.compiler.clone(), message: "Unexpected".into() })?;
+    let args: Vec<&OsStr> = cmd.get_args().collect();
+    let mut cmdstr: String = compiler;
+    for arg in args {
+        if let Some(a) = arg.to_str() {
+            cmdstr += format!(" {}", a).as_str();      
+        }
+    }
+    eprintln!("RMake: {}", cmdstr);
+    let output = cmd.output()
+                    .map_err(|_| ConfigError::CommandFailed { cmd: conf.compiler.clone(), message: "Unexpected".into() })?;
 
     let mut ret: Vec<CmdOutput> = Vec::new();
     let tmp: CmdOutput = CmdOutput { 

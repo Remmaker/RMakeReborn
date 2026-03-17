@@ -6,6 +6,7 @@ pub enum ConfigError {
     ReadError { message: String },
     InvalidConfig { message: String },
     CommandFailed { cmd: String, message: String },
+    NonZeroExit { code: i32 },
 }
 
 impl std::fmt::Display for ConfigError {
@@ -25,6 +26,9 @@ impl std::fmt::Display for ConfigError {
             },
             ConfigError::CommandFailed { cmd, message } => {
                 write!(f, "Failed to execute command {cmd}: {message}")
+            },
+            ConfigError::NonZeroExit { code } => {
+                write!(f, "RMake returned {} exit status", code)
             },
        }
     }

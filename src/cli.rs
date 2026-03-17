@@ -53,17 +53,26 @@ pub fn run() -> Result<i32, ConfigError>{
         res = execute_run(&run_conf)?;
     }
 
-    // TODO: check for multiple output (scripts for run section)
+    let msgerr: String = res[0].stderr.clone();
+    let msgok: String  = res[0].stdout.clone();
+
     if let Some(v) = res[0].status.code() {
         if v == 0 {
-            eprintln!("Rmake exited normmally: {}", v);
+            if !msgok.is_empty() {
+                eprintln!("{}", msgok);
+            }
+            eprintln!("RMake returned {} exit status", v);
             Ok(v)
         } else {
-            eprintln!("Rmake exited abnormally: {}", v);
-            Ok(v)
+            if !msgerr.is_empty() {
+                eprintln!("{}", msgerr);
+            }
+            Err(ConfigError::NonZeroExit { code: v })
         }
     } else {
-        eprintln!("Rmake exited abnormally: No reason");
-        Ok(0) // For now
+        if !msgerr.is_empty() {
+            eprintln!("{}", res[0].stderr);
+        }
+        Err(ConfigError::NonZeroExit { code: -1 } )
     }
 }

@@ -5,7 +5,8 @@ mod build;
 
 fn main() {
     if let Err(err) = cli::run() {
-        eprintln!("Error {err}");
+        eprintln!("error: {err}");
+        // TODO: maybe pass the exit status here
         std::process::exit(1);
     }
 }
