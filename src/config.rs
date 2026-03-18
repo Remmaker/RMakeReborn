@@ -187,8 +187,8 @@ pub fn file_is_conf(file: &str) -> Result<bool, ConfigError> {
 }
 
 pub fn check_for_config_requirement(conf: &Config) -> Result<(), ConfigError> {
-    if !conf.section.contains_key("build") || !conf.section.contains_key("run") {
-        return Err(ConfigError::InvalidConfig{message: "Missing build or run section, that's required".into()});
+    if !conf.section.contains_key("build") {
+        return Err(ConfigError::InvalidConfig{message: "Missing build section, that's required (please, it's a build tool...)".into()});
     }
 
     Ok(())
