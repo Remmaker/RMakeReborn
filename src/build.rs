@@ -100,9 +100,11 @@ pub fn execute_build(conf: &BuildConfig) -> Result<CmdOutput, ConfigError> {
     eprintln!("RMake: {}", cmdstr);
     let output = cmd.output()
                     .map_err(|_| ConfigError::CommandFailed { cmd: conf.compiler.clone(), message: "Unexpected".into() })?;
-    let cout: CmdOutput = {
-
-    }
-    Ok(output)
+    let tmp: CmdOutput = CmdOutput { 
+        stdout: String::from_utf8_lossy(&output.stdout).to_string(), 
+        stderr: String::from_utf8_lossy(&output.stderr).to_string(), 
+        status: output.status 
+    };
+    Ok(tmp)
 }
 

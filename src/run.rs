@@ -3,7 +3,7 @@ use crate::config::*;
 #[derive(Default, Debug)]
 pub struct RunConfig {
     target: String,
-    rebuild: bool,
+    pub rebuild: bool,
 }
 
 pub fn parse_run(conf: &Config) -> Result<RunConfig, ConfigError> {
@@ -24,6 +24,18 @@ pub fn parse_run(conf: &Config) -> Result<RunConfig, ConfigError> {
                 }
                 run_conf.target = v.to_string() 
             },
+            "rebuild" => {
+                if v.split_once(" ").is_some() {
+                    return Err(ConfigError::InvalidConfig { message: "Only one argument to rebuild is supported at time".into() })
+                }
+                run_conf.rebuild = match v.as_str() {
+                    "true"  => true,
+                    "false" => false,
+                    "t"     => true,
+                    "f"     => false,
+                    _       => false
+                }
+            },
             _ => {
                 eprintln!("warning: RMake Unknow keyword {k}");
             }
@@ -34,8 +46,6 @@ pub fn parse_run(conf: &Config) -> Result<RunConfig, ConfigError> {
 } 
 
 pub fn execute_run(run_conf: &RunConfig) -> Result<CmdOutput, ConfigError> {
-    let mut ret: CmdOutput;
-
     let binary = if run_conf.target.starts_with(['/', '\\'])
                     || run_conf.target.contains(":\\")
                     || run_conf.target.starts_with("./")

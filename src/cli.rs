@@ -15,6 +15,31 @@ Usage
 "#);
 }
 
+fn end(res: &CmdOutput) -> Result<i32, ConfigError> { 
+    let msgerr: String = res.stderr.clone();
+    let msgok: String  = res.stdout.clone();
+
+    if let Some(v) = res.status.code() {
+        if v == 0 {
+            if !msgok.is_empty() {
+                eprintln!("{}", msgok);
+            }
+            eprintln!("RMake returned {} exit status", v);
+            Ok(v)
+        } else {
+            if !msgerr.is_empty() {
+                eprintln!("{}", msgerr);
+            }
+            Err(ConfigError::NonZeroExit { code: v })
+        }
+    } else {
+        if !msgerr.is_empty() {
+            eprintln!("{}", res.stderr);
+        }
+        Err(ConfigError::NonZeroExit { code: -1 } )
+    }
+}
+
 pub fn run() -> Result<i32, ConfigError>{
     let rmake_arg: Vec<String> = std::env::args().collect();
     let mut path_build_file: String = String::new();
@@ -42,37 +67,24 @@ pub fn run() -> Result<i32, ConfigError>{
     let lines: Vec<&str> = content.lines().collect();
     let config: Config = parse(lines)?;
 
-    let res: CmdOutput;
+    let res_run: CmdOutput;
+    let res_build: CmdOutput;
     check_for_config_requirement(&config)?;
 
+    let build_conf = parse_build(&config)?;
+    
     if should_build {
-        let build_conf = parse_build(&config)?;
-        res = execute_build(&build_conf)?;
+       res_build = execute_build(&build_conf)?;
+       end(&res_build)
     } else {
         let run_conf = parse_run(&config)?;
-        res = execute_run(&run_conf)?;
-    }
-
-    let msgerr: String = res.stderr.clone();
-    let msgok: String  = res.stdout.clone();
-
-    if let Some(v) = res.status.code() {
-        if v == 0 {
-            if !msgok.is_empty() {
-                eprintln!("{}", msgok);
+        if run_conf.rebuild {
+            res_build = execute_build(&build_conf)?;
+            if let Some(r) = res_build.status.code() && r != 0 {
+                return end(&res_build)
             }
-            eprintln!("RMake returned {} exit status", v);
-            Ok(v)
-        } else {
-            if !msgerr.is_empty() {
-                eprintln!("{}", msgerr);
-            }
-            Err(ConfigError::NonZeroExit { code: v })
         }
-    } else {
-        if !msgerr.is_empty() {
-            eprintln!("{}", res.stderr);
-        }
-        Err(ConfigError::NonZeroExit { code: -1 } )
+        res_run = execute_run(&run_conf)?;
+        end(&res_run)
     }
 }
