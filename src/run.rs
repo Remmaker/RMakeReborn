@@ -17,7 +17,7 @@ pub fn parse_run(conf: &Config) -> Result<RunConfig, ConfigError> {
 
 
     for (k, v) in target.iter() {
-        match k.as_str()  {
+        match k.as_str() {
             "target" => { 
                 if v.split_once(" ").is_some() {
                     return Err(ConfigError::InvalidConfig { message: "Only one target is supported at time".into() })

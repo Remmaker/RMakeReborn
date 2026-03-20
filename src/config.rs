@@ -118,8 +118,8 @@ pub fn parse(lines: Vec<&str>) -> Result<Config, ConfigError> {
 
         if let Some((key, value)) = line.split_once("=") {
             if let Some(section) = &config.current_section {
-                let parsed_value = parse_value(&config, value)?;
-                config.section.entry(section.clone()).or_default().insert(key.to_string(), parsed_value);
+                let parsed_value = parse_value(&config, value.trim())?;
+                config.section.entry(section.clone()).or_default().insert(key.trim().to_string(), parsed_value);
                 continue;
             }
 
